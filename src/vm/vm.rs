@@ -1,6 +1,5 @@
-const MEMORY_SIZE: usize = u16::MAX as usize;
-
-use super::Registers;
+use crate::vm::registers::Registers;
+use crate::MEMORY_SIZE;
 pub struct VM {
     pub memory: [u16; MEMORY_SIZE],
     pub registers: Registers,

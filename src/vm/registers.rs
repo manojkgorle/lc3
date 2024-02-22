@@ -1,5 +1,5 @@
+use crate::{ConditionFlag, PC_START};
 use core::panic;
-
 pub struct Registers {
     pub r0: u16,
     pub r1: u16,
@@ -24,7 +24,7 @@ impl Registers {
             r5: 0,
             r6: 0,
             r7: 0,
-            pc: 0,
+            pc: PC_START,
             cond: 0,
         }
     }
@@ -87,6 +87,15 @@ impl Registers {
             _ => {
                 panic!("update performed on invalid register")
             }
+        }
+    }
+    pub fn update_cond_register(&mut self, r: u8) {
+        if self.get(r).unwrap() == 0 {
+            self.update(9, ConditionFlag::ZRO as u16).unwrap();
+        } else if self.get(r).unwrap() >> 15 != 0 {
+            self.update(9, ConditionFlag::NEG as u16).unwrap();
+        } else {
+            self.update(r, ConditionFlag::POS as u16).unwrap();
         }
     }
 }
