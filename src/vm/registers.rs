@@ -1,5 +1,6 @@
-use crate::{ConditionFlag, PC_START};
 use core::panic;
+
+use crate::{ConditionFlag, PC_START};
 pub struct Registers {
     pub r0: u16,
     pub r1: u16,
@@ -43,59 +44,45 @@ impl Registers {
             _ => Err("get performed on index out of range".to_string()),
         }
     }
-    pub fn update(&mut self, index: u8, value: u16) -> Result<bool, String> {
+    pub fn update(&mut self, index: u8, value: u16) {
         match index {
             1 => {
                 self.r1 = value;
-                Ok(true)
             }
             2 => {
                 self.r2 = value;
-                Ok(true)
             }
             3 => {
                 self.r3 = value;
-                Ok(true)
             }
             4 => {
                 self.r4 = value;
-                Ok(true)
             }
             5 => {
                 self.r5 = value;
-                Ok(true)
             }
             6 => {
                 self.r6 = value;
-                Ok(true)
             }
             7 => {
                 self.r7 = value;
-                Ok(true)
             }
             8 => {
-                if value == self.get(8).unwrap() + 1 as u16 {
-                    self.pc = value;
-                    return Ok(true);
-                }
-                Ok(false)
+                self.pc = value;
             }
             9 => {
                 self.cond = value;
-                Ok(true)
             }
-            _ => {
-                panic!("update performed on invalid register")
-            }
+            _ => panic!("update register index out of range"),
         }
     }
     pub fn update_cond_register(&mut self, r: u8) {
         if self.get(r).unwrap() == 0 {
-            self.update(9, ConditionFlag::ZRO as u16).unwrap();
+            self.update(9, ConditionFlag::ZRO as u16);
         } else if self.get(r).unwrap() >> 15 != 0 {
-            self.update(9, ConditionFlag::NEG as u16).unwrap();
+            self.update(9, ConditionFlag::NEG as u16);
         } else {
-            self.update(r, ConditionFlag::POS as u16).unwrap();
+            self.update(9, ConditionFlag::POS as u16);
         }
     }
 }
