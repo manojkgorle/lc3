@@ -18,4 +18,7 @@ impl VM {
         self.memory[address] = value;
     }
 
+    pub fn read_memory(&self, address: usize) -> u16 {
+        self.memory[address]
+    }
 }
