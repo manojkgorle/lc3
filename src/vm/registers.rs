@@ -1,0 +1,92 @@
+use core::panic;
+
+pub struct Registers {
+    pub r0: u16,
+    pub r1: u16,
+    pub r2: u16,
+    pub r3: u16,
+    pub r4: u16,
+    pub r5: u16,
+    pub r6: u16,
+    pub r7: u16,
+    pub pc: u16,
+    pub cond: u16,
+}
+
+impl Registers {
+    pub fn new() -> Registers {
+        Registers {
+            r0: 0,
+            r1: 0,
+            r2: 0,
+            r3: 0,
+            r4: 0,
+            r5: 0,
+            r6: 0,
+            r7: 0,
+            pc: 0,
+            cond: 0,
+        }
+    }
+    pub fn get(&mut self, index: u8) -> Result<u16, String> {
+        match index {
+            0 => Ok(self.r0),
+            1 => Ok(self.r1),
+            2 => Ok(self.r2),
+            3 => Ok(self.r3),
+            4 => Ok(self.r4),
+            5 => Ok(self.r5),
+            6 => Ok(self.r6),
+            7 => Ok(self.r7),
+            8 => Ok(self.pc),
+            9 => Ok(self.cond),
+            _ => Err("get performed on index out of range".to_string()),
+        }
+    }
+    pub fn update(&mut self, index: u8, value: u16) -> Result<bool, String> {
+        match index {
+            1 => {
+                self.r1 = value;
+                Ok(true)
+            }
+            2 => {
+                self.r2 = value;
+                Ok(true)
+            }
+            3 => {
+                self.r3 = value;
+                Ok(true)
+            }
+            4 => {
+                self.r4 = value;
+                Ok(true)
+            }
+            5 => {
+                self.r5 = value;
+                Ok(true)
+            }
+            6 => {
+                self.r6 = value;
+                Ok(true)
+            }
+            7 => {
+                self.r7 = value;
+                Ok(true)
+            }
+            8 => {
+                if value == self.get(8).unwrap() + 1 as u16 {
+                    self.pc = value;
+                    return Ok(true);
+                }
+                Ok(false)
+            }
+            9 => {
+                self.cond = value;
+                Ok(true)
+            }
+            _ => {
+                panic!("update performed on invalid register")
+            }
+        }
+    }
+}
