@@ -70,38 +70,43 @@ pub fn execute(instr: u16, vm: &mut VM) {
 }
 
 pub fn add(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
-    let sr1 = ((instr >> 6) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
+    let sr1 = (instr >> 6) & 0b111;
     let registers = &mut vm.registers;
     let sr1_value = registers.get(sr1).unwrap();
     if (instr >> 5) & 0b1 == 0 {
-        let sr2 = (instr >> 3 & 0b111) as u8;
+        let sr2: u16 = instr & 0b111;
         let sr2_value = registers.get(sr2).unwrap();
-        registers.update(dr, sr1_value + sr2_value);
+        registers.update(dr, ((sr1_value as u32) + (sr2_value as u32)) as u16);
     } else {
-        let imm5 = (instr >> 5) & 0b11111;
-        registers.update(dr, sr1_value + imm5);
+        let imm5 = sign_extend(instr & 0b11111, 5);
+        // prevent overflow and underflow
+        registers.update(dr, ((sr1_value as u32) + (imm5 as u32)) as u16);
     }
     registers.update_cond_register(dr)
 }
 
 pub fn and(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
-    let sr1 = ((instr >> 6) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
+    let sr1 = (instr >> 6) & 0b111;
     let registers = &mut vm.registers;
     let sr1_value = registers.get(sr1).unwrap();
     if (instr >> 5) & 0b1 == 0 {
-        let sr2 = (instr >> 3 & 0b111) as u8;
+        let sr2 = instr & 0b111;
         let sr2_value = registers.get(sr2).unwrap();
         let sr1_and_sr2 = sr1_value & sr2_value;
         registers.update(dr, sr1_and_sr2);
+    } else {
+        let imm5 = sign_extend(instr & 0b11111, 5);
+        let sr1_and_imm5 = sr1_value & imm5;
+        registers.update(dr, sr1_and_imm5);
     }
     registers.update_cond_register(dr)
 }
 
 pub fn not(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
-    let sr = ((instr >> 6) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
+    let sr = (instr >> 6) & 0b111;
     let registers = &mut vm.registers;
     let sr_value = registers.get(sr).unwrap();
 
@@ -112,8 +117,7 @@ pub fn not(instr: u16, vm: &mut VM) {
 //loop
 pub fn br(instr: u16, vm: &mut VM) {
     let registers = &mut vm.registers;
-    let pc_offset_9 = sign_extend(instr & 0x1fff, 9);
-
+    let pc_offset_9 = sign_extend(instr & 0b111111111, 9);
     let flag = (instr >> 9) & 0b111;
     if flag & registers.cond != 0 {
         let val = registers.pc as u32 + pc_offset_9 as u32;
@@ -122,7 +126,7 @@ pub fn br(instr: u16, vm: &mut VM) {
 }
 
 pub fn jmp(instr: u16, vm: &mut VM) {
-    let base_r = ((instr >> 6) & 0b111) as u8;
+    let base_r = (instr >> 6) & 0b111;
     let registers = &mut vm.registers;
     let base_r_val = registers.get(base_r).unwrap();
     registers.update(8, base_r_val); // update program counter
@@ -132,7 +136,7 @@ pub fn jsr(instr: u16, vm: &mut VM) {
     let registers = &mut vm.registers;
     registers.update(7, registers.pc);
     if (instr >> 11) & 0b1 == 0 {
-        let base_r = ((instr >> 6) & 0b111) as u8;
+        let base_r = (instr >> 6) & 0b111;
         let base_r_value = registers.get(base_r).unwrap();
         registers.update(8, base_r_value);
     } else {
@@ -142,25 +146,25 @@ pub fn jsr(instr: u16, vm: &mut VM) {
 }
 
 pub fn ld(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
     let pc_offset_9 = sign_extend(instr & 0b111111111, 9);
-    let mem_val = vm.read_memory((vm.registers.pc + pc_offset_9) as usize);
+    let mem_val = vm.read_memory(((vm.registers.pc + pc_offset_9) as u16) as usize);
     vm.registers.update(dr, mem_val);
     vm.registers.update_cond_register(dr);
 }
 
 pub fn ldi(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
     let pc_offset_9 = sign_extend(instr & 0b111111111, 9);
     let pc = vm.registers.pc;
-    let mem_addr = vm.read_memory(pc_offset_9.into()) + pc;
+    let mem_addr = vm.read_memory((pc_offset_9 + pc) as usize);
     vm.registers.update(dr, vm.read_memory(mem_addr.into()));
     vm.registers.update_cond_register(dr)
 }
 
 pub fn ldr(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
-    let base_r = ((instr >> 6) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
+    let base_r = (instr >> 6) & 0b111;
     let pc_offset_6 = sign_extend(instr & 0b111111, 6);
     let base_r_val = vm.registers.get(base_r).unwrap();
     let mem_val = vm.read_memory((base_r_val + pc_offset_6).into());
@@ -169,7 +173,7 @@ pub fn ldr(instr: u16, vm: &mut VM) {
 }
 
 pub fn lea(instr: u16, vm: &mut VM) {
-    let dr = ((instr >> 9) & 0b111) as u8;
+    let dr = (instr >> 9) & 0b111;
     let pc_offset_9 = sign_extend(instr & 0b111111111, 9);
     let val = vm.registers.pc + pc_offset_9;
     vm.registers.update(dr, val);
@@ -177,7 +181,7 @@ pub fn lea(instr: u16, vm: &mut VM) {
 }
 
 pub fn st(instr: u16, vm: &mut VM) {
-    let sr = ((instr >> 9) & 0b111) as u8;
+    let sr = (instr >> 9) & 0b111;
     let pc_offset_9 = sign_extend(instr & 0b111111111, 9);
     let addr = vm.registers.pc + pc_offset_9;
     let sr_val = vm.registers.get(sr).unwrap();
@@ -185,7 +189,7 @@ pub fn st(instr: u16, vm: &mut VM) {
 }
 
 pub fn sti(instr: u16, vm: &mut VM) {
-    let sr = ((instr >> 9) & 0b111) as u8;
+    let sr = (instr >> 9) & 0b111;
     let pc_offset_9 = sign_extend(instr & 0b111111111, 9);
     let addr = vm.registers.pc + pc_offset_9;
     let sr_val = vm.registers.get(sr).unwrap();
@@ -193,8 +197,8 @@ pub fn sti(instr: u16, vm: &mut VM) {
 }
 
 pub fn str(instr: u16, vm: &mut VM) {
-    let sr = ((instr >> 9) & 0b111) as u8;
-    let base_r = ((instr >> 6) & 0b111) as u8;
+    let sr = (instr >> 9) & 0b111;
+    let base_r = (instr >> 6) & 0b111;
     let pc_offset_6 = sign_extend(instr & 0b111111, 6);
     let str_val = vm.registers.get(sr).unwrap();
     let base_val = vm.registers.get(base_r).unwrap();

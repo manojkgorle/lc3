@@ -31,7 +31,7 @@ impl Registers {
             cond: 0,
         }
     }
-    pub fn get(&mut self, index: u8) -> Result<u16, String> {
+    pub fn get(&self, index: u16) -> Result<u16, String> {
         match index {
             0 => Ok(self.r0),
             1 => Ok(self.r1),
@@ -46,7 +46,7 @@ impl Registers {
             _ => Err("get performed on index out of range".to_string()),
         }
     }
-    pub fn update(&mut self, index: u8, value: u16) {
+    pub fn update(&mut self, index: u16, value: u16) {
         match index {
             1 => {
                 self.r1 = value;
@@ -78,7 +78,7 @@ impl Registers {
             _ => panic!("update register index out of range"),
         }
     }
-    pub fn update_cond_register(&mut self, r: u8) {
+    pub fn update_cond_register(&mut self, r: u16) {
         if self.get(r).unwrap() == 0 {
             self.update(9, ConditionFlag::ZRO as u16);
         } else if self.get(r).unwrap() >> 15 != 0 {

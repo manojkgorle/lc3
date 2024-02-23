@@ -8,11 +8,11 @@ use vm::VM;
 
 pub fn execute_program(vm: &mut VM) {
     while vm.registers.pc < MEMORY_SIZE as u16 {
-        let instr = vm.read_memory(vm.registers.pc.into());
+        let instr = vm.read_memory(vm.registers.pc as usize);
         if instr == 0 {
             break;
         }
         vm.registers.pc += 1;
-        execute(instr, vm)
+        execute(instr, vm);
     }
 }
