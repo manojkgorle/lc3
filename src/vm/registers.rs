@@ -1,6 +1,8 @@
-use core::panic;
-
 use crate::{ConditionFlag, PC_START};
+use core::panic;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug, PartialEq)]
 pub struct Registers {
     pub r0: u16,
     pub r1: u16,
